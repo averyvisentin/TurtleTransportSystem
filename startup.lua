@@ -1,5 +1,5 @@
 require("state")
-
+require("main")
 
 -- SET LABEL
 os.setComputerLabel('Turtle ' .. os.getComputerID())
@@ -11,11 +11,6 @@ for _, side in pairs({'back', 'top', 'left', 'right'}) do
         break
     end
 end
-
-
-
-
-
 -- Define global variables for state
 
 function Log_movement(direction, state) --adjust location and orientation based on movement
@@ -40,8 +35,8 @@ end
 -- Define function to calibrate the turtle's position and orientation
 function Calibrate()
     -- Attempt to determine current position using GPS
-    local x, y, z = gps.locate(5)
-    if not x or not y or not z then
+    local xyz = gps.locate(5)
+    if not xyz then
         print("GPS signal not found. Cannot calibrate.")
         return false
     end
@@ -124,8 +119,12 @@ local function main()
     end
 
     -- Continue with other startup tasks
-    print("Calibration successful. Continuing startup tasks...")
+    print("Calibration successful.")
 end
 
 -- Run the main function
 main()
+
+-- Run main.lua and state.lua as separate threads in separate tabs
+shell.openTab("main.lua")
+shell.openTab("state.lua")

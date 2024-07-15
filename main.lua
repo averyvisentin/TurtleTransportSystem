@@ -1,6 +1,6 @@
 require("state")
 
-config = {
+local config = {
     locations = {
         vault = { x = 20, y = 1, z = -14 },    --chest for item grabbing
         refuel = { x = 8, y = 1, z = 12 },  --chest for refueling
