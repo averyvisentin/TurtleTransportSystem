@@ -1,5 +1,5 @@
 require("state")
-require("main")
+
 
 -- SET LABEL
 os.setComputerLabel('Turtle ' .. os.getComputerID())
@@ -12,7 +12,7 @@ for _, side in pairs({'back', 'top', 'left', 'right'}) do
     end
 end
 -- Define global variables for state
-
+local state = state
 function Log_movement(direction, state) --adjust location and orientation based on movement
     if direction == 'up' then --so y plus is upvalue
         state.location.y = state.location.y + 1
