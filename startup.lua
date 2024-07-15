@@ -1,5 +1,19 @@
 require("state")
 
+--need to look for modem and open it to rednet
+local modem = peripheral.find("modem")
+--need to wrap the modem
+local rednet = peripheral.wrap(modem)
+if modem == nil then
+    print("No modem found. Exiting.")
+    return
+end
+rednet.open(any)
+
+
+
+
+
 -- Define global variables for state
 local state = {}
 

@@ -1,6 +1,6 @@
 require("state")
 
-local config = {
+config = {
     locations = {
         vault = { x = 0, y = 0, z = 0 },    --chest for item grabbing
         refuel = { x = 10, y = 0, z = 0 },  --chest for refueling
@@ -16,8 +16,6 @@ local config = {
         
         fuel_per_unit = fuelnames[item]
         }
-        -- Initialize rednet and start listening for commands
-rednet.open() -- Adjust based on your setup
 -- Define global tables
 Bumps = {
     north = { 0,  0, -1},
