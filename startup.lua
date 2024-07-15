@@ -17,7 +17,6 @@ end
 
 
 -- Define global variables for state
-local state = {}
 
 function Log_movement(direction, state) --adjust location and orientation based on movement
     if direction == 'up' then --so y plus is upvalue
@@ -39,10 +38,10 @@ function Log_movement(direction, state) --adjust location and orientation based 
 end
 
 -- Define function to calibrate the turtle's position and orientation
-local function Calibrate()
+function Calibrate()
     -- Attempt to determine current position using GPS
-    local sx, sy, sz = gps.locate()
-    if not sx or not sy or not sz then
+    local x, y, z = gps.locate(5)
+    if not x or not y or not z then
         print("GPS signal not found. Cannot calibrate.")
         return false
     end
@@ -50,10 +49,10 @@ local function Calibrate()
     -- Try moving to an adjacent block and back to detect orientation
     for i = 1, 4 do
         -- Check if there's an empty adjacent block
-        if not turtle.detect() then
-            break
+        if not turtle.detect(success) then
+            return true
         end
-        if not turtle.turnRight() then
+        if not turtle.turnRight(success) then
             print("Failed to turn right during calibration.")
             return false
         end
@@ -86,20 +85,20 @@ local function Calibrate()
     end
 
     -- Recheck position after moving forward
-    local nx, ny, nz = gps.locate()
+    local nx, ny, nz = x, y, z
     if not nx or not ny or not nz then
         print("GPS signal lost after calibration movement.")
         return false
     end
 
     -- Determine orientation based on change in coordinates
-    if nx == sx + 1 then
+    if nx == x + 1 then
         state.orientation = 'east'
-    elseif nx == sx - 1 then
+    elseif nx == x - 1 then
         state.orientation = 'west'
-    elseif nz == sz + 1 then
+    elseif nz == z + 1 then
         state.orientation = 'south'
-    elseif nz == sz - 1 then
+    elseif nz == z - 1 then
         state.orientation = 'north'
     else
         print("Could not determine orientation after calibration.")
