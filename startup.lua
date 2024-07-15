@@ -1,14 +1,15 @@
 require("state")
 
---need to look for modem and open it to rednet
-local modem = peripheral.find("modem")
---need to wrap the modem
-local rednet = peripheral.wrap(modem)
-if modem == nil then
-    print("No modem found. Exiting.")
-    return
+-- SET LABEL
+os.setComputerLabel('Turtle ' .. os.getComputerID())
+
+-- OPEN REDNET
+for _, side in pairs({'back', 'top', 'left', 'right'}) do
+    if peripheral.getType(side) == 'modem' then
+        rednet.open(side)
+        break
+    end
 end
-rednet.open(any)
 
 
 

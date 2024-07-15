@@ -2,9 +2,9 @@ require("state")
 
 config = {
     locations = {
-        vault = { x = 0, y = 0, z = 0 },    --chest for item grabbing
-        refuel = { x = 10, y = 0, z = 0 },  --chest for refueling
-        home = { x = 0, y = 0, z = 10 }},   --chest for dumping
+        vault = { x = 20, y = 1, z = -14 },    --chest for item grabbing
+        refuel = { x = 8, y = 1, z = 12 },  --chest for refueling
+        home = { x = 8, y = 1, z = 15 }},   --chest for dumping
         fuelnames = {
             -- ITEMS THE TURTLE CONSIDERS FUEL
             ['minecraft:coal'] = 80,
