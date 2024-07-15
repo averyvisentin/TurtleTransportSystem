@@ -1,5 +1,6 @@
 require("state")
 
+
 -- SET LABEL
 os.setComputerLabel('Turtle ' .. os.getComputerID())
 
@@ -17,6 +18,25 @@ end
 
 -- Define global variables for state
 local state = {}
+
+function Log_movement(direction, state) --adjust location and orientation based on movement
+    if direction == 'up' then --so y plus is upvalue
+        state.location.y = state.location.y + 1
+    elseif direction == 'down' then
+        state.location.y = state.location.y - 1
+    elseif direction == 'forward' then
+        bump = Bumps[state.orientation]
+        state.location = {x = state.location.x + bump[1], y = state.location.y + bump[2], z = state.location.z + bump[3]}
+    elseif direction == 'back' then
+        bump = Bumps[state.orientation]
+        state.location = {x = state.location.x - bump[1], y = state.location.y - bump[2], z = state.location.z - bump[3]}
+    elseif direction == 'left' then
+        state.orientation = left_shift[state.orientation]
+    elseif direction == 'right' then
+        state.orientation = right_shift[state.orientation]
+    end
+    return true
+end
 
 -- Define function to calibrate the turtle's position and orientation
 local function Calibrate()
