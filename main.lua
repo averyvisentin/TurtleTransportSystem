@@ -1,6 +1,6 @@
 require("state")
 
-local config = {
+config = {
     locations = {
         vault = { x = 20, y = 1, z = -14 },    --chest for item grabbing
         refuel = { x = 8, y = 1, z = 12 },  --chest for refueling
@@ -13,8 +13,6 @@ local config = {
             ['minecraft:charcoal_block'] = 720,
             ['minecraft:lava_bucket'] = 1000,
             ['minecraft:blaze_rod'] = 120},
-        
-        fuel_per_unit = fuelnames[item]
         }
 -- Define global tables
 Bumps = {
@@ -69,7 +67,7 @@ Attack = {
         function Check_fuel(state)
             local fuel_level = turtle.getFuelLevel()
             local fuel_buffer = config.fuelBuffer
-            local fuel_per_unit = config.fuel_per_unit
+            local fuel_per_unit = config.fuelnames
         
             if not state.turtles.log.fuel[turtleID] then
                 state.turtles.log.fuel[turtleID] = {}
@@ -134,7 +132,7 @@ function Prepare(min_fuel_amount, state)
     turtle.select(1)
     if turtle.getFuelLevel() ~= 'unlimited' then
         while turtle.getFuelLevel() < min_fuel_amount do
-            local fuel_to_suck = math.min(64, math.ceil(min_fuel_amount / config.fuel_per_unit))
+            local fuel_to_suck = math.min(64, math.ceil(min_fuel_amount / config.fuelnames))
             if not turtle.suck(fuel_to_suck) then
                 return false
             end
