@@ -70,3 +70,7 @@ end
 
 -- Run the main functions
 parallel.waitForAny(handleMessages, userInterface)
+
+shell.openTab("out.lua")
+shell.openTab("state.lua")
+shell.openTab("in.lua")

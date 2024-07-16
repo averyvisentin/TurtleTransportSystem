@@ -1,6 +1,5 @@
 require("state")
-
-local config = {
+config = {
     locations = {
         vault = { x = 20, y = 1, z = -14 },    --chest for item grabbing
         refuel = { x = 8, y = 1, z = 12 },  --chest for refueling
@@ -14,6 +13,9 @@ local config = {
             ['minecraft:lava_bucket'] = 1000,
             ['minecraft:blaze_rod'] = 120},
         }
+        
+
+
 -- Define global tables
 Bumps = {
     north = { 0,  0, -1},
@@ -63,6 +65,8 @@ Attack = {
     down = turtle.attackDown
 }
 
+state = {}
+state.turtles.log.fuel = {}
 
         function Check_fuel(state)
             local fuel_level = turtle.getFuelLevel()
@@ -165,8 +169,8 @@ function FuelRequirement(current, target, fuelBuffer)
     end
 
     -- Assuming target is a table with x, y, z keys
-    local distanceToTarget = Distance({x=currentX, y=currentY, z=currentZ}, {x=target.x, y=target.y, z=target.z})
-
+    local distanceToTarget = Distance({x=currentX, y=currentY, z=currentZ}, {x=target.x, y=target.y, z=target.z}, {mode = "distance"})
+   
     local totalFuelNeeded = distanceToTarget + fuelBuffer
     return totalFuelNeeded
 end
@@ -189,7 +193,7 @@ function Get_direction(current, target) -- get the direction
         return 'down'
     end
 end
-
+location = {}
 function Get_neighbors(node) --a* function
     local neighbors = {}
     for _, dir in ipairs({'up', 'down', 'north', 'south', 'east', 'west'}) do
@@ -229,15 +233,16 @@ end
 -- Cache for storing calculated paths
 local pathCache = {}
 
-function A_star(start, goal)
+function A_star(s, goal)
+    local start = Locate()
     -- Check if path is already calculated and cached
-    local startKey = start.x .. ',' .. start.y .. ',' .. start.z
+    local startKey = s.x .. ',' .. s.y .. ',' .. s.z
     local goalKey = goal.x .. ',' .. goal.y .. ',' .. goal.z
     if pathCache[startKey] and pathCache[startKey][goalKey] then
         return pathCache[startKey][goalKey]
     end
 
-    local heuristic = Distance(start, goal)
+    local heuristic =  Distance(current, goal, {mode = "distance"})
     local open_set = {start}
     local came_from = {}
     local g_score = {[startKey] = 0}
@@ -284,7 +289,7 @@ function A_star(start, goal)
         end
     end
 
-    print("No path found from " .. start.x .. "," .. start.y .. "," .. start.z .. " to " .. goal.x .. "," .. goal.y .. "," .. goal.z)
+    print("No path found from " .. s.x .. "," .. s.y .. "," .. s.z .. " to " .. goal.x .. "," .. goal.y .. "," .. goal.z)
     return nil -- No path found
 end
 
@@ -334,7 +339,7 @@ function Go_to(target)  -- Go to a target location using A* pathfinding
         local target = path[i]
         local direction = Get_direction(current, target)
         local attempts = 0
-        while not In_location(current, target) and attempts < max_attempts do
+        while not Distance(point1, point2, {mode = "distance"}) and attempts < max_attempts do
             if Try_move(direction) then
                 current = UpdatePosition(direction)
                 i = i + 1 -- Move to the next position in the path
@@ -353,7 +358,7 @@ function Go_to(target)  -- Go to a target location using A* pathfinding
         if attempts >= max_attempts then
             Print("Failed to reach next position after " .. max_attempts .. " attempts")
             return false
-        end    end    return In_location(current, target)
+        end    end    return Distance(current, target, {mode = "distance"})
 end
 
 
@@ -376,10 +381,10 @@ function Handle_obstacle(direction)   -- handle an obstacle
 end
 
 
-function Start(coordinates, facing, state) -- Function to set the absolute starting position
+function Start(coordinates, facing) -- Function to set the absolute starting position
     -- Initialize the start sub-table if it doesn't exist
     state.start = state.start or {}
-    gps.locate(0.1)
+    Locate(coordinates)
     if coordinates then
         -- Unpack coordinates directly into state.start
         state.start.X, state.start.Y, state.start.Z = table.unpack(coordinates)
@@ -507,30 +512,6 @@ function Log_movement(direction, state) --adjust location and orientation based 
     return true
 end
 
-function In_location(xyzo, location, state) --checks if xyzo is in a location     
-local location = location or state.location
-    for _, axis in pairs({'x', 'y', 'z'}) do    --iterates over x, y, z and checks if point coordinates match those specified
-        if state.location[axis] then                  --in the state.location table
-            if state.location[axis] ~= xyzo[axis] then
-                return false
-            end
-        end
-    end
-    return true
-end
-
-function In_area(xyz, area) --checks if xyz is in an area, defined by a table with min and max xyz
-    local locations = config.locations
-    if locations then
-        for _, location in ipairs(locations) do
-            if xyz.x <= location.max_x and xyz.x >= location.min_x and xyz.y <= location.max_y and xyz.y >= location.min_y and xyz.z <= location.max_z and xyz.z >= location.min_z then
-                return true
-            end
-        end
-    end
-    return false
-end
-
 function Calibrate(state)
     -- GEOPOSITION BY MOVING TO ADJACENT BLOCK AND BACK
     local sx, sy, sz = gps.locate()
@@ -575,17 +556,68 @@ function Calibrate(state)
 end
 
 
-function Distance(point1, point2)
-    local dx = point2.x - point1.x
-    local dy = point2.y - point1.y
-    -- Check if z coordinates are present for both points
-    if point1.z ~= nil and point2.z ~= nil then
-        local dz = point2.z - point1.z
-        return math.sqrt(dx*dx + dy*dy + dz*dz) -- 3D distance
-    else
-        return math.sqrt(dx*dx + dy*dy) -- 2D distance
+-- Combined location utility function
+function Distance(point1, point2, options)
+    options = options or {}
+    local function isNumber(x) return type(x) == "number" end
+    
+    -- Ensure point1 is always a table with x, y, z
+    if type(point1) ~= "table" then
+        return nil, "Point1 must be a table with x, y, z coordinates"
     end
+    
+    -- If point2 is not provided, assume we're checking against state.location
+    if not point2 then
+        point2 = options.state and options.state.location or {}
+    end
+    
+    -- Distance calculation
+    if options.mode == "distance" then
+        local dx = (point2.x or 0) - point1.x
+        local dy = (point2.y or 0) - point1.y
+        local dz = (point2.z or 0) - point1.z
+        
+        if isNumber(point1.z) and isNumber(point2.z) then
+            return math.sqrt(dx*dx + dy*dy + dz*dz) -- 3D distance
+        else
+            return math.sqrt(dx*dx + dy*dy) -- 2D distance
+        end
+    end
+    
+    -- Location checking
+    if options.mode == "in_location" then
+        for _, axis in pairs({'x', 'y', 'z'}) do
+            if point2[axis] and point1[axis] ~= point2[axis] then
+                return false
+            end
+        end
+        return true
+    end
+    
+    -- Area checking
+    if options.mode == "in_area" then
+        if type(point2) ~= "table" or not point2.min or not point2.max then
+            return nil, "For area checking, point2 must be a table with min and max coordinates"
+        end
+        
+        return point1.x >= point2.min.x and point1.x <= point2.max.x and
+               point1.y >= point2.min.y and point1.y <= point2.max.y and
+               point1.z >= point2.min.z and point1.z <= point2.max.z
+    end
+    
+    return nil, "Invalid mode specified"
 end
+
+-- Example usage:
+--[[
+local state = { location = {x = 0, y = 0, z = 0} }
+local point = {x = 1, y = 1, z = 1}
+local area = { min = {x = 0, y = 0, z = 0}, max = {x = 10, y = 10, z = 10} }
+
+print(LocationUtility(point, nil, {mode = "in_location", state = state}))  -- false
+print(LocationUtility(point, area, {mode = "in_area"}))  -- true
+print(LocationUtility(point, {x = 4, y = 5, z = 6}, {mode = "distance"}))  -- 5.196152422706632
+--]]
 
 function TransferItems()
     local maxItems = 16 -- Assuming inventory slots from 1 to 16
